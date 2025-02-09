@@ -1,0 +1,42 @@
+# Ref: https://argocd-applicationset.readthedocs.io/en/stable/Generators-Git/
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: devx-hms-apps-appset
+spec:
+  generators:
+    - git:
+        repoURL: git@github.com:moulikrishna070707/argo.git
+        # The following is only valid for scm provider, not for git provider (hence commented out)
+        # Reference to a Secret containing an access token. (optional)
+        #tokenRef:
+        #  secretName: github-access-token
+        #  key: ng-cd.gen
+        revision: stage
+        directories:
+          - path: k8s/*
+
+
+  template:
+    metadata:
+      name: 'devx-hms-on-{{path.basename}}'
+    spec:
+      source:
+        repoURL: 'git@github.com:moulikrishna070707/argo.git'
+        #targetRevision: 'HEAD'
+        targetRevision: 'stage'
+        path: '{{path}}'
+      project: 'devx-one'
+      destination:
+        # Use the following destination, once the specified clusters are defined and setup in argocd
+        name: '{{path.basename}}'
+        #server: https://kubernetes.default.svc
+        namespace: devx-hms
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: false
+        syncOptions:
+          - PruneLast=true
+          - CreateNamespace=false
+          - ApplyOutOfSyncOnly=true
